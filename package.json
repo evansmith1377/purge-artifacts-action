@@ -1,7 +1,7 @@
 {
   "name": "purge-artifacts-action",
   "version": "1.0.0",
-  "description": "Github action for automatic deletion of artifacts",
+  "description": "GitHub Action that deletes workflow artifacts older than a human-readable expiry duration.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -12,11 +12,11 @@
     "pack": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test-watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "all": "npm run build && npm run format && npm run lint && npm run pack && npm test"
+    "all": "npm run build && npm run format-check && npm run lint && npm run pack && npm test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kolpav/purge-artifacts-action"
+    "url": "git+https://github.com/evansmith1377/purge-artifacts-action"
   },
   "keywords": [
     "github",
@@ -28,6 +28,8 @@
   "dependencies": {
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
+    "@octokit/plugin-retry": "^8.1.0",
+    "@octokit/plugin-throttling": "^11.0.3",
     "parse-duration": "^2.1.6"
   },
   "devDependencies": {
@@ -36,7 +38,6 @@
     "date-fns": "^4.3.0",
     "esbuild": "^0.28.0",
     "eslint": "^9.0.0",
-    "eslint-plugin-jest": "^29.0.0",
     "jest": "^30.4.2",
     "prettier": "^3.0.0",
     "ts-jest": "^29.4.11",

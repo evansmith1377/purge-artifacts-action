@@ -1,4 +1,5 @@
-import { shouldDelete } from '../src/main.js'
+import { jest } from '@jest/globals'
+import { shouldDelete, purgeArtifacts } from '../src/main.js'
 import { sub } from 'date-fns'
 import { IActionInputs } from '../src/utils.js'
 
@@ -105,5 +106,68 @@ describe('shouldDelete', () => {
       exceptPrefix: 'tmp_'
     }
     expect(shouldDelete(expiredArtifact as any, actionInptus)).toEqual(true)
+  })
+})
+
+describe('purgeArtifacts', () => {
+  process.env.GITHUB_REPOSITORY = 'kolpav/purge-artifacts-action'
+
+  function makeOctokit(
+    artifacts: unknown[],
+    deleteArtifact: (args: { artifact_id: number }) => Promise<unknown>
+  ) {
+    return {
+      rest: {
+        actions: {
+          listArtifactsForRepo: jest.fn(async () => ({
+            data: { artifacts, total_count: artifacts.length }
+          })),
+          deleteArtifact: jest.fn(deleteArtifact)
+        }
+      }
+    }
+  }
+
+  test('deletes expired candidates and records per-artifact failures', async () => {
+    const old = sub(new Date(), { days: 5 }).toISOString()
+    const artifacts = [
+      { id: 1, name: 'a', created_at: old },
+      { id: 2, name: 'b', created_at: old },
+      { id: 3, name: 'c', created_at: old }
+    ]
+    const octokit = makeOctokit(artifacts, async ({ artifact_id }) => {
+      if (artifact_id === 2) {
+        throw new Error('boom')
+      }
+      return {}
+    })
+    const inputs: IActionInputs = {
+      expireInMs: 0,
+      onlyPrefix: '',
+      exceptPrefix: ''
+    }
+
+    const result = await purgeArtifacts(octokit as any, inputs)
+
+    expect(result.deleted.map(a => a.id).sort()).toEqual([1, 3])
+    expect(result.failed.map(f => f.artifact.id)).toEqual([2])
+    expect(octokit.rest.actions.deleteArtifact).toHaveBeenCalledTimes(3)
+  })
+
+  test('does not delete artifacts that are not yet expired', async () => {
+    const fresh = new Date().toISOString()
+    const artifacts = [{ id: 1, name: 'fresh', created_at: fresh }]
+    const octokit = makeOctokit(artifacts, async () => ({}))
+    const inputs: IActionInputs = {
+      expireInMs: 24 * 3600000,
+      onlyPrefix: '',
+      exceptPrefix: ''
+    }
+
+    const result = await purgeArtifacts(octokit as any, inputs)
+
+    expect(result.deleted).toEqual([])
+    expect(result.failed).toEqual([])
+    expect(octokit.rest.actions.deleteArtifact).not.toHaveBeenCalled()
   })
 })

@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { retry } from '@octokit/plugin-retry'
+import { throttling } from '@octokit/plugin-throttling'
 import parseDuration from 'parse-duration'
 
 export type GitHub = ReturnType<typeof github.getOctokit>
@@ -16,7 +18,37 @@ export interface IActionInputs {
 
 export function getOctokit(): GitHub {
   const token = core.getInput('token', { required: true })
-  return github.getOctokit(token)
+  return github.getOctokit(
+    token,
+    {
+      throttle: {
+        onRateLimit(
+          retryAfter: number,
+          options: { method: string; url: string },
+          _octokit: unknown,
+          retryCount: number
+        ) {
+          core.warning(
+            `Rate limit hit for ${options.method} ${options.url}; retrying after ${retryAfter}s (attempt ${retryCount + 1}).`
+          )
+          return retryCount < 3
+        },
+        onSecondaryRateLimit(
+          retryAfter: number,
+          options: { method: string; url: string },
+          _octokit: unknown,
+          retryCount: number
+        ) {
+          core.warning(
+            `Secondary rate limit hit for ${options.method} ${options.url}; retrying after ${retryAfter}s (attempt ${retryCount + 1}).`
+          )
+          return retryCount < 3
+        }
+      }
+    },
+    retry,
+    throttling
+  )
 }
 
 export function getActionInputs(): IActionInputs {
