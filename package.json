@@ -1,6 +1,6 @@
 {
   "name": "purge-artifacts-action",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Github action for automatic deletion of artifacts",
   "type": "module",
   "main": "dist/index.js",
