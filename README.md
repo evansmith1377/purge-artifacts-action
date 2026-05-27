@@ -1,75 +1,113 @@
-# No longer maintained
+# Artifact TTL Purge
 
-This project was created as temporary solution to problem I saw a lot of people to have but it seems people at github have no intention of fixing and neither do I.
-I recommend looking at other projects or you could use this as starting point for your own action.
+A GitHub Action that deletes workflow artifacts older than a human-readable
+expiry duration (a "time to live"). Useful for keeping artifact storage under
+control until GitHub offers this natively.
 
-You could also +1 [this issue](https://github.com/actions/upload-artifact/issues/290)
+This is a maintained, modernized fork of
+[`kolpav/purge-artifacts-action`](https://github.com/kolpav/purge-artifacts-action)
+(original author: Pavel Kolář). It runs on the Node 24 action runtime.
 
-or take a look at this comment from the same issue https://github.com/actions/upload-artifact/issues/290#issuecomment-1374207010
+## Permissions
 
-# Delete artifacts action
+Deleting artifacts requires the workflow token to have `actions: write`. Grant
+it in the workflow (or job), otherwise the action fails with
+`Resource not accessible by integration`:
 
-Action responsible for deleting old artifacts by setting expire duration.
-
-Hopefuly this is just temporary solution till github implements this functionality natively.
+```yaml
+permissions:
+  actions: write
+```
 
 ## Inputs
-### `expire-in`
-**Required** for how long the artifacts should be kept.
-Most of the human readable formats are supported `10 minutes`, `1hr 20mins`, `1week`.
-Take a look at [parse-duration](https://github.com/jkroso/parse-duration) for more information.
 
+| Input          | Required | Default              | Description                                                                                   |
+| -------------- | -------- | -------------------- | --------------------------------------------------------------------------------------------- |
+| `expire-in`    | yes      | —                    | Max artifact age; anything older is deleted. Human-readable, e.g. `30 minutes`, `1 week`. `0` deletes everything. |
+| `token`        | no       | `${{ github.token }}` | Token used to list and delete artifacts. Must carry `actions: write` (see Permissions above). |
+| `onlyPrefix`   | no       | `''`                 | If set, only artifacts whose name starts with this prefix are eligible for deletion.          |
+| `exceptPrefix` | no       | `''`                 | Artifacts whose name starts with this prefix are never deleted (takes precedence over `onlyPrefix`). |
+
+Durations are parsed by
+[`parse-duration`](https://github.com/jkroso/parse-duration); see it for the
+full list of supported formats (`10 minutes`, `1hr 20mins`, `1week`, ...).
 
 ## Outputs
-### `deleted-artifacts`
-Serialized list of deleted artifacts. Empty `[]` when nothing is deleted
+
+| Output              | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `deleted-artifacts` | Serialized JSON array of the deleted artifacts; `"[]"` when nothing was deleted.  |
 
 ## Usage
 
-Run this action as cron. This won't delete artifacts of running workflows because they
-are persisted after workflow completion.
+Run it on a schedule. Artifacts of in-progress workflows are not affected, since
+they are only persisted after the workflow completes.
 
 ```yaml
-name: 'Delete old artifacts'
+name: 'Purge old artifacts'
 on:
   schedule:
     - cron: '0 * * * *' # every hour
 
+permissions:
+  actions: write
+
 jobs:
-  delete-artifacts:
+  purge:
     runs-on: ubuntu-latest
     steps:
-      - uses: kolpav/purge-artifacts-action@v1
+      - uses: evansmith1377/purge-artifacts-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          expire-in: 7days # Setting this to 0 will delete all artifacts
+          expire-in: 7days # 0 deletes all artifacts
 ```
 
-## Optional arguments
-
-### `onlyPrefix`
-
-Only purge artifacts that start with `tmp_` as a prefix.
+### Only delete certain artifacts
 
 ```yaml
 with:
-  onlyPrefix: tmp_  
+  expire-in: 7days
+  onlyPrefix: tmp_ # only purge artifacts whose name starts with "tmp_"
 ```
 
-### `exceptPrefix`
-
-Exclude any artifacts that start with `prod_` as a prefix
+### Exclude certain artifacts
 
 ```yaml
 with:
-  exceptPrefix: prod_
+  expire-in: 7days
+  exceptPrefix: prod_ # never purge artifacts whose name starts with "prod_"
 ```
 
-## Note
+### Using the output
 
-If you reach size limit, you can temporarily change to `on: push` and run it immediately.
-Even if the action succeeded, it will take a few more minutes for the artifacts to actually disappear.
+```yaml
+- uses: evansmith1377/purge-artifacts-action@v1
+  id: purge
+  with:
+    expire-in: 7days
+- run: echo "Deleted: ${{ steps.purge.outputs.deleted-artifacts }}"
+```
 
-## Contributing
+## Notes
 
-I would take a look at other maintained projects and contribute to them.
+- If you hit the storage size limit, you can temporarily switch to `on: push`
+  to run it immediately.
+- Even after the action succeeds, it can take a few minutes for the artifacts to
+  actually disappear from the UI.
+- The action paginates through all repository artifacts and deletes expired ones
+  with retry/throttling so it stays within GitHub's rate limits. A failure to
+  delete an individual artifact is reported but does not abort the rest.
+
+## Development
+
+```bash
+npm ci
+npm run all   # typecheck, format-check, lint, bundle (dist/), test
+```
+
+`dist/index.js` is the bundled, committed entrypoint; rebuild it with
+`npm run pack` and commit the result whenever `src/` changes (the release
+workflow enforces this).
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
