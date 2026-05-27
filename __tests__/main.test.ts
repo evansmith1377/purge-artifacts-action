@@ -1,6 +1,6 @@
-import { main, shouldDelete } from '../src/main'
+import { shouldDelete } from '../src/main.js'
 import { sub } from 'date-fns'
-import { IActionInputs } from '../src/utils'
+import { IActionInputs } from '../src/utils.js'
 
 describe('shouldDelete', () => {
   test('expired', () => {

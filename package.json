@@ -1,17 +1,18 @@
 {
   "name": "purge-artifacts-action",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Github action for automatic deletion of artifacts",
-  "main": "lib/main.js",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "format": "prettier --write **/*.{ts,yml,json}",
-    "format-check": "prettier --check **/*.{ts,yml,json}",
-    "lint": "eslint src/**/*.ts",
-    "pack": "ncc build",
-    "test": "jest",
-    "test-watch": "jest --watch",
-    "all": "yarn run build && yarn run format && yarn run lint && yarn run pack && yarn run test"
+    "build": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,yml,json}\"",
+    "format-check": "prettier --check \"**/*.{ts,yml,json}\"",
+    "lint": "eslint src",
+    "pack": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test-watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "all": "npm run build && npm run format && npm run lint && npm run pack && npm test"
   },
   "repository": {
     "type": "git",
@@ -25,26 +26,21 @@
   "author": "Pavel Kolář",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.2.0",
-    "@actions/github": "^2.1.1",
-    "@octokit/core": "^2.4.2",
-    "@octokit/plugin-rest-endpoint-methods": "^3.2.0",
-    "date-fns": "^2.9.0",
-    "parse-duration": "^0.1.2"
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "parse-duration": "^2.1.6"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.23",
-    "@types/node": "^12.7.12",
-    "@typescript-eslint/parser": "^2.8.0",
-    "@zeit/ncc": "^0.20.5",
-    "eslint": "^5.16.0",
-    "eslint-plugin-github": "^2.0.0",
-    "eslint-plugin-jest": "^22.21.0",
-    "jest": "^24.9.0",
-    "jest-circus": "^24.9.0",
-    "js-yaml": "^3.13.1",
-    "prettier": "^1.19.1",
-    "ts-jest": "^24.2.0",
-    "typescript": "^3.6.4"
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "date-fns": "^4.3.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-jest": "^29.0.0",
+    "jest": "^30.4.2",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.0",
+    "typescript-eslint": "^8.60.0"
   }
 }

@@ -1,24 +1,29 @@
-import { eachArtifact } from '../src/utils'
+import { jest } from '@jest/globals'
+import { eachArtifact } from '../src/utils.js'
+
+process.env.GITHUB_REPOSITORY = 'kolpav/purge-artifacts-action'
 
 describe('eachArtifact', () => {
   test('called with correct arguments', async () => {
     const octokit = {
-      actions: {
-        listArtifactsForRepo: jest.fn(async () => ({
-          data: {
-            artifacts: [],
-            total_count: 0
-          }
-        }))
+      rest: {
+        actions: {
+          listArtifactsForRepo: jest.fn(async () => ({
+            data: {
+              artifacts: [],
+              total_count: 0
+            }
+          }))
+        }
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const artifact of eachArtifact(octokit as any)) {
     }
-    expect(octokit.actions.listArtifactsForRepo).toBeCalledWith({
+    expect(octokit.rest.actions.listArtifactsForRepo).toHaveBeenCalledWith({
       owner: 'kolpav',
-      repo: 'https://github.com/kolpav/purge-artifacts-action',
+      repo: 'purge-artifacts-action',
       page: 1,
-      // eslint-disable-line @typescript-eslint/camelcase
       per_page: 100
     })
   })
@@ -32,24 +37,25 @@ describe('eachArtifact', () => {
     const firstListArtifactsForRepoResponse = {
       data: {
         artifacts: artifacts.slice(0, maxPerPage),
-        // eslint-disable-line @typescript-eslint/camelcase
         total_count: totalCount
       }
     }
     const secondListArtifactsForRepoResponse = {
       data: {
         artifacts: artifacts.slice(maxPerPage, artifacts.length),
-        // eslint-disable-line @typescript-eslint/camelcase
         total_count: totalCount
       }
     }
+    type ListResponse = { data: { artifacts: number[]; total_count: number } }
     const listArtifactsForRepoMock = jest
-      .fn()
+      .fn<() => Promise<ListResponse>>()
       .mockResolvedValueOnce(firstListArtifactsForRepoResponse)
       .mockResolvedValueOnce(secondListArtifactsForRepoResponse)
     const octokit = {
-      actions: {
-        listArtifactsForRepo: listArtifactsForRepoMock
+      rest: {
+        actions: {
+          listArtifactsForRepo: listArtifactsForRepoMock
+        }
       }
     }
     let artifactIndex = 0
