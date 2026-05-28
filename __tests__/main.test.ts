@@ -110,7 +110,7 @@ describe('shouldDelete', () => {
 })
 
 describe('purgeArtifacts', () => {
-  process.env.GITHUB_REPOSITORY = 'kolpav/purge-artifacts-action'
+  process.env.GITHUB_REPOSITORY = 'evansmith1377/artifact-ttl-purge'
 
   function makeOctokit(
     artifacts: unknown[],

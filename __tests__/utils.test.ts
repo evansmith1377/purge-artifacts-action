@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals'
 import { eachArtifact, getActionInputs } from '../src/utils.js'
 
-process.env.GITHUB_REPOSITORY = 'kolpav/purge-artifacts-action'
+process.env.GITHUB_REPOSITORY = 'evansmith1377/artifact-ttl-purge'
 
 describe('eachArtifact', () => {
   test('called with correct arguments', async () => {
@@ -21,8 +21,8 @@ describe('eachArtifact', () => {
     for await (const artifact of eachArtifact(octokit as any)) {
     }
     expect(octokit.rest.actions.listArtifactsForRepo).toHaveBeenCalledWith({
-      owner: 'kolpav',
-      repo: 'purge-artifacts-action',
+      owner: 'evansmith1377',
+      repo: 'artifact-ttl-purge',
       page: 1,
       per_page: 100
     })

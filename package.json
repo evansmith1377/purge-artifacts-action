@@ -1,5 +1,5 @@
 {
-  "name": "purge-artifacts-action",
+  "name": "artifact-ttl-purge",
   "version": "1.1.0",
   "description": "GitHub Action that deletes workflow artifacts older than a human-readable expiry duration.",
   "type": "module",
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evansmith1377/purge-artifacts-action"
+    "url": "git+https://github.com/evansmith1377/artifact-ttl-purge"
   },
   "keywords": [
     "github",

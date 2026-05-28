@@ -56,7 +56,7 @@ jobs:
   purge:
     runs-on: ubuntu-latest
     steps:
-      - uses: evansmith1377/purge-artifacts-action@v1
+      - uses: evansmith1377/artifact-ttl-purge@v1
         with:
           expire-in: 7days # 0 deletes all artifacts
 ```
@@ -80,7 +80,7 @@ with:
 ### Using the output
 
 ```yaml
-- uses: evansmith1377/purge-artifacts-action@v1
+- uses: evansmith1377/artifact-ttl-purge@v1
   id: purge
   with:
     expire-in: 7days
