@@ -1,6 +1,6 @@
 {
   "name": "artifact-ttl-purge",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "GitHub Action that deletes workflow artifacts older than a human-readable expiry duration.",
   "type": "module",
   "main": "dist/index.js",
